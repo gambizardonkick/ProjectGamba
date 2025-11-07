@@ -21,11 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const WHITELISTED_DISCORD_IDS = ['1356903329518583948', '398263473466769420'];
 
 const mainMenuItems = [
-  {
-    title: "Leaderboard",
-    url: "/",
-    icon: Trophy,
-  },
+\
   {
     title: "Tournament",
     url: "/tournament",
