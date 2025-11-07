@@ -27,11 +27,6 @@ const mainMenuItems = [
     icon: Trophy,
   },
   {
-    title: "Milestones",
-    url: "/milestones",
-    icon: Award,
-  },
-  {
     title: "Tournament",
     url: "/tournament",
     icon: Swords,
