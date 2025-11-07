@@ -1,0 +1,367 @@
+import { sql } from "drizzle-orm";
+import { pgTable, text, varchar, integer, timestamp, boolean, decimal } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// Leaderboard entries
+export const leaderboardEntries = pgTable("leaderboard_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rank: integer("rank").notNull(),
+  username: text("username").notNull(),
+  wagered: decimal("wagered", { precision: 15, scale: 2 }).notNull(),
+  prize: decimal("prize", { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertLeaderboardEntrySchema = createInsertSchema(leaderboardEntries).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertLeaderboardEntry = z.infer<typeof insertLeaderboardEntrySchema>;
+export type LeaderboardEntry = typeof leaderboardEntries.$inferSelect;
+
+// Leaderboard settings
+export const leaderboardSettings = pgTable("leaderboard_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  totalPrizePool: decimal("total_prize_pool", { precision: 15, scale: 2 }).notNull(),
+  endDate: timestamp("end_date").notNull(),
+  logoUrl: text("logo_url").default("https://87b8edd3-dea8-4272-afc3-40bee9679b6a-00-2va5b2sxkkqs7.pike.replit.dev/@fs/home/runner/workspace/attached_assets/image_1761502625743.png"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertLeaderboardSettingsSchema = createInsertSchema(leaderboardSettings, {
+  endDate: z.coerce.date(),
+}).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertLeaderboardSettings = z.infer<typeof insertLeaderboardSettingsSchema>;
+export type LeaderboardSettings = typeof leaderboardSettings.$inferSelect;
+
+// Level milestones
+export const levelMilestones = pgTable("level_milestones", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // e.g., "Bronze 1", "Silver 2"
+  tier: integer("tier").notNull(), // 1-24 for ordering
+  imageUrl: text("image_url").notNull(),
+  rewards: text("rewards").array().notNull(), // Array of reward descriptions
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertLevelMilestoneSchema = createInsertSchema(levelMilestones).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertLevelMilestone = z.infer<typeof insertLevelMilestoneSchema>;
+export type LevelMilestone = typeof levelMilestones.$inferSelect;
+
+// Challenges
+export const challenges = pgTable("challenges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  gameName: text("game_name").notNull(),
+  gameImage: text("game_image").notNull(),
+  minMultiplier: decimal("min_multiplier", { precision: 10, scale: 2 }).notNull(),
+  minBet: decimal("min_bet", { precision: 10, scale: 2 }).notNull(),
+  prize: decimal("prize", { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  claimedBy: text("claimed_by"),
+  claimStatus: text("claim_status").default("unclaimed"), // unclaimed, pending, verified, declined
+  discordUsername: text("discord_username"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertChallengeSchema = createInsertSchema(challenges).omit({
+  id: true,
+  createdAt: true,
+  claimedBy: true,
+  claimStatus: true,
+  discordUsername: true,
+});
+
+export type InsertChallenge = z.infer<typeof insertChallengeSchema>;
+export type Challenge = typeof challenges.$inferSelect;
+
+// Free spins offers
+export const freeSpinsOffers = pgTable("free_spins_offers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull(),
+  gameName: text("game_name").notNull(),
+  gameProvider: text("game_provider").notNull(),
+  gameImage: text("game_image").notNull(),
+  spinsCount: integer("spins_count").notNull(),
+  spinValue: decimal("spin_value", { precision: 5, scale: 2 }).notNull(),
+  totalClaims: integer("total_claims").notNull(),
+  claimsRemaining: integer("claims_remaining").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  requirements: text("requirements").array().notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertFreeSpinsOfferSchema = createInsertSchema(freeSpinsOffers, {
+  expiresAt: z.coerce.date(),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFreeSpinsOffer = z.infer<typeof insertFreeSpinsOfferSchema>;
+export type FreeSpinsOffer = typeof freeSpinsOffers.$inferSelect;
+
+// Users
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username"),
+  points: integer("points").notNull().default(0),
+  kickUsername: text("kick_username"),
+  kickUserId: text("kick_user_id"),
+  kickAccessToken: text("kick_access_token"),
+  kickRefreshToken: text("kick_refresh_token"),
+  lastKickletSync: timestamp("last_kicklet_sync"),
+  discordUsername: text("discord_username"),
+  discordUserId: text("discord_user_id"),
+  discordAccessToken: text("discord_access_token"),
+  discordRefreshToken: text("discord_refresh_token"),
+  discordAvatar: text("discord_avatar"),
+  gamdomUsername: text("gamdom_username"),
+  stakeUsername: text("stake_username"),
+  sessionId: text("session_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastLogin: timestamp("last_login").defaultNow().notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+// Casino Platforms
+export const casinoPlatforms = pgTable("casino_platforms", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  logoUrl: text("logo_url").notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCasinoPlatformSchema = createInsertSchema(casinoPlatforms).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCasinoPlatform = z.infer<typeof insertCasinoPlatformSchema>;
+export type CasinoPlatform = typeof casinoPlatforms.$inferSelect;
+
+// User Casino Accounts (junction table for user-casino relationships)
+export const userCasinoAccounts = pgTable("user_casino_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  casinoId: varchar("casino_id").notNull(),
+  username: text("username").notNull(),
+  linkedAt: timestamp("linked_at").defaultNow().notNull(),
+});
+
+export const insertUserCasinoAccountSchema = createInsertSchema(userCasinoAccounts).omit({
+  id: true,
+  linkedAt: true,
+});
+
+export type InsertUserCasinoAccount = z.infer<typeof insertUserCasinoAccountSchema>;
+export type UserCasinoAccount = typeof userCasinoAccounts.$inferSelect;
+
+// Game History
+export const gameHistory = pgTable("game_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  gameName: text("game_name").notNull(), // blackjack, dice, mines, limbo
+  betAmount: integer("bet_amount").notNull(),
+  payout: integer("payout").notNull(),
+  result: text("result").notNull(), // win, loss
+  gameData: text("game_data"), // JSON string with game-specific data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGameHistorySchema = createInsertSchema(gameHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGameHistory = z.infer<typeof insertGameHistorySchema>;
+export type GameHistory = typeof gameHistory.$inferSelect;
+
+// Shop Items
+export const shopItems = pgTable("shop_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  pointsCost: integer("points_cost").notNull(),
+  imageUrl: text("image_url"),
+  stock: integer("stock").notNull().default(-1), // -1 means unlimited
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertShopItemSchema = createInsertSchema(shopItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertShopItem = z.infer<typeof insertShopItemSchema>;
+export type ShopItem = typeof shopItems.$inferSelect;
+
+// Redemptions
+export const redemptions = pgTable("redemptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  shopItemId: varchar("shop_item_id").notNull(),
+  pointsSpent: integer("points_spent").notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, declined
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertRedemptionSchema = createInsertSchema(redemptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertRedemption = z.infer<typeof insertRedemptionSchema>;
+export type Redemption = typeof redemptions.$inferSelect;
+
+// Admin Logs
+export const adminLogs = pgTable("admin_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  action: text("action").notNull(), // add_points, remove_points, set_points, create_entry, update_entry, delete_entry, etc.
+  targetType: text("target_type").notNull(), // user, leaderboard, milestone, challenge, free_spin, shop_item, redemption
+  targetId: varchar("target_id"), // ID of the affected item
+  details: text("details").notNull(), // JSON string with change details
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAdminLogSchema = createInsertSchema(adminLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
+export type AdminLog = typeof adminLogs.$inferSelect;
+
+// Active Mines Game (not in database, stored in memory/Firebase)
+export interface ActiveMinesGame {
+  id: string;
+  userId: string;
+  betAmount: number;
+  minesCount: number;
+  minePositions: number[]; // array of positions (0-24) where mines are located
+  revealedTiles: number[]; // array of positions (0-24) that have been revealed
+  currentMultiplier: number;
+  gameActive: boolean;
+  createdAt: string;
+}
+
+// Active Blackjack Game (not in database, stored in memory/Firebase)
+export interface Card {
+  suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
+  rank: 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K';
+  value: number;
+}
+
+export interface BlackjackHand {
+  cards: Card[];
+  total: number;
+  isBusted: boolean;
+  isBlackjack: boolean;
+}
+
+export interface ActiveBlackjackGame {
+  id: string;
+  userId: string;
+  betAmount: number;
+  deck: Card[];
+  playerHands: BlackjackHand[]; // Array to support split hands
+  dealerHand: BlackjackHand;
+  currentHandIndex: number; // Which hand is being played (for splits)
+  dealerHoleCard: Card | null; // The face-down card
+  gameStatus: 'betting' | 'playing' | 'dealer_turn' | 'finished';
+  canDouble: boolean;
+  canSplit: boolean;
+  hasSplit: boolean;
+  gameActive: boolean;
+  createdAt: string;
+}
+
+// Tournament Bracket (stored in Firebase)
+export interface TournamentPlayer {
+  name: string;
+  multiplier: number | null;
+}
+
+export interface TournamentMatch {
+  id: string;
+  player1: TournamentPlayer;
+  player2: TournamentPlayer;
+  winner: string | null;
+  completed: boolean;
+}
+
+export interface TournamentBracket {
+  [round: string]: TournamentMatch[];
+}
+
+export interface TournamentData {
+  size: 4 | 8 | 16 | 32;
+  bracket: TournamentBracket;
+  champion: string;
+  lastUpdated: string;
+}
+
+// Giveaways
+export const giveaways = pgTable("giveaways", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  points: integer("points").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  startTime: timestamp("start_time").defaultNow().notNull(),
+  endTime: timestamp("end_time").notNull(),
+  status: text("status").notNull().default("active"), // active, completed
+  winnerId: varchar("winner_id"),
+  winnerUsername: text("winner_username"),
+  winnerDiscordUsername: text("winner_discord_username"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGiveawaySchema = createInsertSchema(giveaways).omit({
+  id: true,
+  createdAt: true,
+  startTime: true,
+  status: true,
+  winnerId: true,
+  winnerUsername: true,
+  winnerDiscordUsername: true,
+});
+
+export type InsertGiveaway = z.infer<typeof insertGiveawaySchema>;
+export type Giveaway = typeof giveaways.$inferSelect;
+
+// Giveaway Entries
+export const giveawayEntries = pgTable("giveaway_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  giveawayId: varchar("giveaway_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  username: text("username").notNull(),
+  discordUserId: text("discord_user_id"),
+  discordUsername: text("discord_username"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGiveawayEntrySchema = createInsertSchema(giveawayEntries).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGiveawayEntry = z.infer<typeof insertGiveawayEntrySchema>;
+export type GiveawayEntry = typeof giveawayEntries.$inferSelect;
